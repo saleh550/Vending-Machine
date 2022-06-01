@@ -5,9 +5,11 @@
 
 typedef struct {
 	// define the parts of the monitor here
-    int current_amount , max_amount;    //amount to save how many units now in the machine
+    int current_units;
+    int consumed_units;
+    int max_units;
     pthread_mutex_t lock;
-	pthread_cond_t cond;
+    pthread_cond_t cond;
 } monitor_t;
 
 monitor_t *theMonitor;

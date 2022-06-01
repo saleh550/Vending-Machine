@@ -6,6 +6,8 @@
 #include "monitor.h"
 #include "supplier.h"
 #include "consumer.h"
+#include<time.h>
+#include<string.h>
 
 struct thread_info {
 	pthread_t thread_id;
@@ -17,10 +19,12 @@ struct thread_info {
 int monitor_init (monitor_t *monitor, int maxCount)
 {
 	// setup the monitor with the values needed
-    monitor -> max_amount = maxCount;
-	monitor -> current_amount = 0 ;
-	pthread_mutex_init(&monitor -> lock,0);
+    monitor->current_units=0;
+    monitor->max_units=maxCount;
+    monitor->consumed_units=0;
+    pthread_mutex_init(&monitor -> lock,0);
 	pthread_cond_init(&monitor -> cond,NULL);
+    
 	
 	// all good
 	return 0;
@@ -53,34 +57,36 @@ int main(int argc, char* args[])
 	char* consumer3Config = args[7];	
 	
 	// initiate the monitor with malloc
-
-	// create one thread for each of the six elements - 3 suppliers, 3 consumers
-	// run them
-     
     theMonitor = (monitor_t*) malloc(sizeof(monitor_t));
 	monitor_init(theMonitor,maxCount);
 
-    struct thread_info *thread;
-	thread = calloc(6, sizeof(struct thread_info)); 
-
 	// create one thread for each of the six elements - 3 suppliers, 3 consumers
+    struct thread_info *threadInfo;
+	threadInfo = calloc(6, sizeof(struct thread_info));
 	// run them
-        pthread_create(&thread[0].thread_id,NULL,&runSupplier,supplier1Config); 
-        pthread_create(&thread[1].thread_id,NULL,&runSupplier,supplier2Config); 
-        pthread_create(&thread[2].thread_id,NULL,&runSupplier,supplier3Config); 
-        pthread_create(&thread[3].thread_id,NULL,&runConsumer,consumer1Config); 
-        pthread_create(&thread[4].thread_id,NULL,&runConsumer,consumer2Config);
-        pthread_create(&thread[5].thread_id,NULL,&runConsumer,consumer3Config);
-        void *result;
-        pthread_join(thread[0].thread_id,result);  // run the thread
-        pthread_join(thread[1].thread_id,NULL);
-        pthread_join(thread[2].thread_id,NULL);    
-        pthread_join(thread[3].thread_id,NULL);
-        pthread_join(thread[4].thread_id,NULL);
-        pthread_join(thread[5].thread_id,NULL);
-        
-        free(theMonitor);
+	pthread_create(&threadInfo[0].thread_id, NULL, &runSupplier, supplier1Config);
+	pthread_create(&threadInfo[1].thread_id, NULL, &runSupplier, supplier2Config);
+	pthread_create(&threadInfo[2].thread_id, NULL, &runSupplier, supplier3Config);
+	pthread_create(&threadInfo[3].thread_id, NULL, &runConsumer, consumer1Config);
+    pthread_create(&threadInfo[4].thread_id, NULL, &runConsumer, consumer2Config);
+    pthread_create(&threadInfo[5].thread_id, NULL, &runConsumer, consumer3Config);
 
+    void *result; // the thread execution result
+	pthread_join(threadInfo[0].thread_id, &result); // wait for the children
+	pthread_join(threadInfo[1].thread_id, &result); // wait for the children
+	pthread_join(threadInfo[2].thread_id, &result); // wait for the children
+	pthread_join(threadInfo[3].thread_id, &result); // wait for the children
+	pthread_join(threadInfo[4].thread_id, &result); // wait for the children
+    pthread_join(threadInfo[5].thread_id, &result); // wait for the children
+	
+    
+    time_t t=time(NULL);
+    time(&t);
+    char *fullT=ctime(&t);
+    if(fullT[strlen(fullT)-1]=='\n')fullT[strlen(fullT)-1]='\0';
+    printf("%s all threads completed Total consumed =%d final stock=%d .\n",fullT,theMonitor->consumed_units,theMonitor->current_units);
+    free(theMonitor);
+    free(threadInfo);
 	exit(0);
 }
 

@@ -1,8 +1,6 @@
-all: vending 
-	
-vending: 
-	gcc -pthread -o vending vending-machine.c consumer.c supplier.c
+all: vending
 
+vending: 
+	gcc -pthread -o vending consumer.c supplier.c vending-machine.c 
 clean:
-	rm  vending		
-	
+	rm -rf vending
